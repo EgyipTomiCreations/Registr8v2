@@ -1,0 +1,326 @@
+﻿#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+
+.status-bar-safe-area {
+    display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+    .status-bar-safe-area {
+        display: flex;
+        position: sticky;
+        top: 0;
+        height: env(safe-area-inset-top);
+        background-color: #f7f7f7;
+        width: 100%;
+        z-index: 1;
+    }
+
+    .flex-column, .navbar-brand {
+        padding-left: env(safe-area-inset-left);
+    }
+}
+html, body {
+    font-weight: bold !important;
+    background-color: #fff6c7 !important;
+    font-family: Apple Chancery, cursive;
+    display: flex;
+    flex-direction: column;
+}
+
+html {
+    padding: 20px;
+    min-height: 100vh;
+}
+
+a, .btn-link {
+    color: #006bb7;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+    .blazor-error-boundary::after {
+        content: "An error has occurred."
+    }
+
+.darker-border-checkbox.form-check-input {
+    border-color: #929292;
+}
+
+.regiszt-btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 5px;
+}
+
+.cim {
+    text-align: center;
+}
+
+.pie-chart {
+    width: 100%;
+}
+
+.sajat-button {
+    color: black !important;
+    width: 100%;
+    border: 1px solid black;
+    background-color: yellowgreen;
+    line-height: 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    padding: 10px;
+    margin-top: 25px;
+}
+
+.input-div {
+    width: 100%;
+}
+
+select {
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+    .header a {
+        background-color: transparent;
+        border: none;
+        width: auto;
+        color: black;
+    }
+
+.input-div label {
+    width: 100%;
+}
+
+.input-div input {
+    width: 100%;
+    border-radius: 8px;
+    padding-left: 10px;
+}
+
+
+.home-links {
+    clear: both;
+    color: black !important;
+    width: 100%;
+    border: 1px solid black;
+    background-color: yellowgreen;
+    line-height: 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    padding: 10px;
+    margin-bottom: 25px;
+}
+
+.home-header {
+    margin-bottom: 20px;
+}
+
+body .accordion-button:focus {
+    box-shadow: none;
+}
+
+.iskola-elem, .csapat-elem {
+    margin: 10px;
+}
+
+.iskola-table td, .csapat-table td {
+    border: solid black 1px;
+    font-weight: 400;
+}
+
+.iskola-table, .csapat-table {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.hianypotlas-textarea {
+    width: 100%;
+    resize: none;
+}
+
+.center-h1 {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.piros {
+    border-radius: 8px;
+    border: 1px solid red;
+    background-color: #c6333a;
+    font-weight: bold;
+    color: black;
+    padding: 10px;
+}
+
+.kek {
+    border-radius: 8px;
+    border: 1px solid blue;
+    background-color: #005ed2;
+    font-weight: bold;
+    color: white;
+    padding: 10px;
+}
+
+.muveletek-td {
+    display: flex;
+    padding: 5px;
+    justify-content: space-around;
+}
+
+.modal.show .modal-dialog {
+    height: 95%;
+}
+
+.modal-content {
+    height: 100%;
+}
+
+body .accordion-button:not(.collapsed) {
+    background-color: #fff67b;
+}
+
+body .accordion-item {
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+body .accordion-button {
+    border-radius: 8px;
+    border: 1px solid gray;
+}
+
+    body .accordion-button:focus {
+        border-color: gray;
+    }
+
+body .accordion-body {
+    background-color: #fff6c7 !important;
+    border-color: gray;
+}
+
+.programnyelv-add, .hatarido-add {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.hatarido-add{
+    flex-wrap: wrap;
+}
+
+.logout-div {
+    position: absolute;
+    right: 0;
+    top: 0;
+    margin: 10px;
+}
+
+.home-div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 10px;
+}
+
+.page {
+    display: flex;
+    flex-direction: column !important;
+}
+
+.hianypotlas-uzenet {
+    font-style: italic;
+    background-color: rgba(0, 0, 0, 0.07);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px;
+}
+
+.btn-group {
+    width: -webkit-fill-available;
+}
+
+.dropdown-menu {
+    width: -webkit-fill-available;
+}
+
+.iskola-table td:first-child, .csapat-table td:first-child{
+    width: 250px;
+}
+
+.text-center
+{
+    text-align: center;
+}
+
+@media(max-width: 550px) {
+    .iskola-table td, .csapat-table td {
+        display: flex;
+        width: auto !important;
+    }
+}
+
+pre {
+    white-space: pre-wrap;
+}

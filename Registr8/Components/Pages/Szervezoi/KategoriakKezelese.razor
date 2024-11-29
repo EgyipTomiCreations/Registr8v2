@@ -1,0 +1,113 @@
+﻿@page "/kategoriak-kezelese"
+
+@inject Utilites utils
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/szervezoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Kategóriák kezelése</h2>
+</div>
+
+<h5>Kategória hozzáadása</h5>
+<div class="programnyelv-add">
+    <InputText class="form-control" @bind-Value="UjKategoria.Nev" />
+    <button class="btn btn-success" @onclick="AddKategoria"><i class="bi bi-plus"></i></button>
+</div>
+
+
+@if (Kategoriak.Count == 0)
+{
+    <p>Nincs még egy kategória sem hozzáadva.</p>
+}
+else
+{
+    <h5>Kategóriák megtekintése</h5>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Kategória</th>
+                <th>Műveletek</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kategoria in Kategoriak)
+            {
+                <tr>
+                    <td>@kategoria.Nev</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="(() => DeleteKategoria(kategoria))"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    public List<Kategoria> Kategoriak = new List<Kategoria>();
+
+    public Kategoria UjKategoria = new();
+
+    public List<CsapatDto> Csapatok = new();
+
+    public async Task DeleteKategoria(Kategoria kategoria)
+    {
+        if (Csapatok.Any(x => x.Kategoria.ID == kategoria.ID))
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen törlés!", $"Hiba oka: A programnyelv használatban van!"));
+            return;
+        }
+        var response = await utils.PostMethod<string>("Kategoria/Torles", kategoria, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen törlés!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres törlés!"));
+        }
+
+        await GetKategoriak();
+    }
+
+    public async Task AddKategoria()
+    {
+        var response = await utils.PostMethod<string>("Kategoria/Regisztracio", UjKategoria, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen hozzáadás!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres hozzáadás!"));
+        }
+        await GetKategoriak();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetKategoriak();
+            await GetAllCsapat();
+        }
+    }
+
+    public async Task GetKategoriak()
+    {
+        Kategoriak = await utils.GetMethod<List<Kategoria>>("Kategoria/GetAllKategoria");
+        StateHasChanged();
+    }
+
+    public async Task GetAllCsapat()
+    {
+        Csapatok = await utils.GetMethod<List<CsapatDto>>("Csapat/GetAllCsapat", Globals.token.Guid.ToString());
+        StateHasChanged();
+    }
+
+}

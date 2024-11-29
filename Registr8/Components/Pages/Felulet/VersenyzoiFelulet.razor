@@ -1,0 +1,61 @@
+﻿@page "/versenyzoi-felulet"
+@inject Utilites utils
+
+<h1 class="cim">Registr8</h1>
+<h2>Versenyzői felület</h2>
+@if (csapat!=null)
+{
+    <p>Üdv @csapat.CsapatNev csapat!</p>
+
+    @if (csapat.Allapot != Csapat.RegisztracioAllapot.ElutasitvaIskola && csapat.Allapot != Csapat.RegisztracioAllapot.ElutasitvaSzervezo)
+    {
+        <a class="home-links" href="/adat-modositas">Adat módosítás</a>
+        <a class="home-links" href="/hianypotlas">Hiánypótlás</a>
+    }
+    else
+    {
+        if (csapat.Allapot == Csapat.RegisztracioAllapot.ElutasitvaIskola)
+        {
+            <div class="center-h1">
+                <div class="piros">
+                Az iskolátok (@csapat.Iskola.Nev) elutasította a regisztrációt!
+                </div>
+                <br />
+                <div class="kek">
+                    Vegyétek fel a kapcsolatot az iskolátok ügyintézőjével! (@csapat.Iskola.KapcsolatTarto.Email)
+                </div>
+            </div>
+        }
+
+        if (csapat.Allapot == Csapat.RegisztracioAllapot.ElutasitvaSzervezo)
+        {
+            <div class="center-h1">
+                A versenyszervezők elutasították a regisztrációtokat.
+            </div>
+        }
+    }
+}
+else
+{
+    <div class="center-h1">
+        <Spinner Color="SpinnerColor.Secondary" />
+    </div>
+}
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+
+
+
+
+
+
+
+@code{
+    CsapatDto csapat { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        csapat = await utils.GetMethod<CsapatDto>("Csapat/GetCsapat", Globals.token.Guid.ToString());
+    }
+}

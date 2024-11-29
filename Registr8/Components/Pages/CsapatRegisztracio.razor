@@ -1,0 +1,351 @@
+﻿@page "/csapat-regisztracio"
+@inject Utilites utils
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager navigationManager
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/" class="home-div"><i class="bi bi-house"></i></a>
+
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopCenter" />
+
+<div class="regisztracio-div">
+    <div class="header">
+    <h1>Csapat regisztráció</h1>
+</div>
+
+<EditForm EditContext="@_editContext" OnValidSubmit="Regisztracio">
+    <DataAnnotationsValidator />
+
+
+    <div class="input-div">
+        <label>Felhasználónév</label>
+            <InputText class="form-control" autocomplete="username" @bind-Value="csapat.FelhasznaloNev" />
+            <ValidationMessage For="@(() => csapat.FelhasznaloNev)" />
+    </div>
+
+    <div class="input-div">
+        <label>Jelszó</label>
+            <InputText class="form-control" autocomplete="new-password" @bind-Value="csapat.Jelszo" type="password" />
+            <ValidationMessage For="@(() => csapat.Jelszo)" />
+    </div>
+
+    <div class="input-div">
+        <label>Csapatnév</label>
+            <InputText class="form-control" @bind-Value="csapat.CsapatNev" />
+            <ValidationMessage For="@(() => csapat.CsapatNev)" />
+    </div>
+
+    <div class="input-div">
+        <label>Iskola</label>
+            @if (Android())
+            {
+                <Registr8.Components.Android.NativePicker
+                @ref="IskolaPicker"
+                ButtonMessage="Iskola kiválsztása" 
+                Message="Válaszd ki az iskolát!"
+                Items="@(iskolak.Select(i => new PickerItem { ID = i.ID, Name = i.Nev }).ToList())"
+                OnValueChanged="SetValasztottIskola"/>
+                <ValidationMessage For="@(() => csapat.valasztottIskola)" />
+            }
+            else
+            {
+                <Dropdown Color="DropdownColor.Primary" OnHidden="StateHasChanged">
+                    <DropdownToggleButton Style="width: 100%;">
+                        @if (csapat.valasztottIskola != null)
+                        {
+                            @(iskolak.First(i => i.ID == csapat.valasztottIskola).Nev)
+                        }
+                        else
+                        {
+                            @("Iskola kiválasztása")
+                        }
+                    </DropdownToggleButton>
+                    <DropdownMenu>
+                        @foreach (Iskola iskola in iskolak)
+                        {
+                            <DropdownItem @onclick="() => SetValasztottIskola(iskola.ID)" Type="DropdownItemType.Link">@iskola.Nev</DropdownItem>
+                            @if (iskola != iskolak.Last())
+                            {
+                                <DropdownDivider />
+                            }
+                        }
+                    </DropdownMenu>
+                </Dropdown>
+                <ValidationMessage For="@(() => csapat.valasztottIskola)" />
+            }
+            
+    </div>
+    <div>
+        <label>Csapat tagjai</label>
+        <div class="input-div">
+            <label>Első tag neve</label>
+                <InputText class="form-control" @bind-Value="csapat.ElsoTagNeve" />
+                <ValidationMessage For="@(() => csapat.ElsoTagNeve)" />
+            <label>Első tag évfolyama</label>
+                <NumberInput TValue="int" @bind-Value="@csapat.ElsoTagEvfolyam" EnableMinMax="true" Min="9" Max="13" />
+                <ValidationMessage For="@(() => csapat.ElsoTagEvfolyam)" />
+        </div>
+        <div class="input-div">
+            <label>Második tag neve</label>
+                <InputText class="form-control" @bind-Value="csapat.MasodikTagNeve" />
+                <ValidationMessage For="@(() => csapat.MasodikTagNeve)" />
+            <label>Második tag évfolyama</label>
+                <NumberInput TValue="int" @bind-Value="@csapat.MasodikTagEvfolyam" EnableMinMax="true" Min="9" Max="13" />
+                <ValidationMessage For="@(() => csapat.MasodikTagEvfolyam)" />
+        </div>
+        <div class="input-div">
+            <label>Harmadik tag neve</label>
+                <InputText class="form-control" @bind-Value="csapat.HarmadikTagNeve" />
+                <ValidationMessage For="@(() => csapat.HarmadikTagEvfolyam)" />
+            <label>Harmadik tag évfolyama</label>
+                <NumberInput TValue="int" @bind-Value="@csapat.HarmadikTagEvfolyam" EnableMinMax="true" Min="9" Max="13" />
+                <ValidationMessage For="@(() => csapat.HarmadikTagEvfolyam)" />
+        </div>
+    </div>
+
+    <div class="input-div">
+        <label>Póttag neve</label>
+            <InputText class="form-control" @bind-Value="csapat.PotTagNeve" />
+            <ValidationMessage For="@(() => csapat.PotTagNeve)" />
+        <label>Pót tag évfolyama</label>
+            <NumberInput TValue="int" @bind-Value="@csapat.PotTagEvfolyam" EnableMinMax="true" Min="9" Max="13" />
+            <ValidationMessage For="@(() => csapat.PotTagEvfolyam)" />
+    </div>
+
+    <div class="input-div">
+        <label>Felkészítő tanár</label>
+            <InputText class="form-control" @bind-Value="csapat.FelkeszitoTanar" />
+            <ValidationMessage For="@(() => csapat.FelkeszitoTanar)" />
+    </div>
+
+
+    <div class="input-div">
+        <label>Kategória</label>
+            @if (Android())
+            {
+                <Registr8.Components.Android.NativePicker @ref="KategoriaPicker"
+                                                          ButtonMessage="Kategória kiválsztása"
+                                                          Message="Válaszd ki a kategóriát!"
+                Items="@(kategoriak.Select(i => new PickerItem { ID = i.ID, Name = i.Nev }).ToList())"
+                                                          OnValueChanged="SetValasztottKategoria" />
+                <ValidationMessage For="@(() => csapat.valasztottKategoria)" />
+            }
+            else
+            {
+                <Dropdown Color="DropdownColor.Primary" OnHidden="StateHasChanged">
+                    <DropdownToggleButton Style="width: 100%;">
+                        @if (csapat.valasztottKategoria != null)
+                        {
+                            @(kategoriak.First(i => i.ID == csapat.valasztottKategoria).Nev)
+                        }
+                        else
+                        {
+                            @("Kategória kiválasztása")
+                        }
+                    </DropdownToggleButton>
+                    <DropdownMenu>
+                        @foreach (Kategoria kategoria in kategoriak)
+                        {
+                            <DropdownItem @onclick="() => SetValasztottKategoria(kategoria.ID)" Type="DropdownItemType.Link">@kategoria.Nev</DropdownItem>
+                            @if (kategoria != kategoriak.Last())
+                            {
+                                <DropdownDivider />
+                            }
+                        }
+                    </DropdownMenu>
+                </Dropdown>
+                <ValidationMessage For="@(() => csapat.valasztottKategoria)" />
+            }
+            
+    </div>
+
+    <div class="input-div">
+        <label>Programnyelv</label>
+            @if (Android())
+            {
+                <Registr8.Components.Android.NativePicker @ref="ProgramNyelvPicker"
+                                                          ButtonMessage="Programnyelv kiválsztása"
+                                                          Message="Válaszd ki a programnyelvet!"
+                Items="@(programNyelvek.Select(i => new PickerItem { ID = i.ID, Name = i.Nev }).ToList())"
+                                                          OnValueChanged="SetValasztottProgramNyelv" />
+                <ValidationMessage For="@(() => csapat.valasztottProgramNyelv)" />
+            }
+            else
+            {
+                <Dropdown Color="DropdownColor.Primary" OnHidden="StateHasChanged">
+                    <DropdownToggleButton Style="width: 100%;">
+                        @if (csapat.valasztottProgramNyelv != null)
+                        {
+                            @(programNyelvek.First(i => i.ID == csapat.valasztottProgramNyelv).Nev)
+                        }
+                        else
+                        {
+                            @("Programnyelv kiválasztása")
+                        }
+                    </DropdownToggleButton>
+                    <DropdownMenu>
+                        @foreach (ProgramNyelv programNyelv in programNyelvek)
+                        {
+                            <DropdownItem @onclick="() => SetValasztottProgramNyelv(programNyelv.ID)" Type="DropdownItemType.Link">@programNyelv.Nev</DropdownItem>
+                            @if (programNyelv != programNyelvek.Last())
+                            {
+                                <DropdownDivider />
+                            }
+                        }
+                    </DropdownMenu>
+                </Dropdown>
+                <ValidationMessage For="@(() => csapat.valasztottProgramNyelv)" />
+            }
+    </div>
+        <div class="input-div">
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Class="regiszt-btn">
+                @if (spinner)
+                {
+                    <Spinner Color="SpinnerColor.Secondary" />
+                }
+                else
+                {
+                    <div>Regisztráció</div>
+                }
+            </Button>
+
+        </div>
+
+    </EditForm>
+</div>
+
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    public class CsapatRegisztracioModel : AuthReq
+    {
+        [Required(ErrorMessage = "A csapatnév mező nem lehet üres!")]
+        public string CsapatNev { get; set; }
+        [Required(ErrorMessage = "Az 1. csapattag neve nem lehet üres!")]
+        public string ElsoTagNeve { get; set; }
+        [Required(ErrorMessage = "A 2. csapattag neve nem lehet üres!")]
+        public string MasodikTagNeve { get; set; }
+        [Required(ErrorMessage = "A 3. csapattag neve nem lehet üres!")]
+        public string HarmadikTagNeve { get; set; }
+        public string PotTagNeve { get; set; }
+        [Required(ErrorMessage = "Az 1. csapattag évfolyama nem lehet üres!")]
+        [Range(9, 13, ErrorMessage = "Az évfolyam 9 és 13 között kell legyen!")]
+        public int ElsoTagEvfolyam { get; set; }
+        [Required(ErrorMessage = "A 2. csapattag évfolyama nem lehet üres!")]
+        [Range(9, 13, ErrorMessage = "Az évfolyam 9 és 13 között kell legyen!")]
+        public int MasodikTagEvfolyam { get; set; }
+        [Required(ErrorMessage = "A 3. csapattag évfolyama nem lehet üres!")]
+        [Range(9, 13, ErrorMessage = "Az évfolyam 9 és 13 között kell legyen!")]
+        public int HarmadikTagEvfolyam { get; set; }
+        [Range(9, 13, ErrorMessage = "Az évfolyam 9 és 13 között kell legyen!")]
+        public int PotTagEvfolyam { get; set; }
+        [Required(ErrorMessage = "A tanár neve nem lehet üres!")]
+        public string FelkeszitoTanar { get; set; }
+        [Required(ErrorMessage = "Egy iskolát ki kell választani!")]
+        public int? valasztottIskola { get; set; } = null;
+        [Required(ErrorMessage = "A kategóriát ki kell választani!")]
+        public int? valasztottKategoria { get; set; } = null;
+        [Required(ErrorMessage = "A programnyelvet ki kell választani!")]
+        public int? valasztottProgramNyelv { get; set; } = null;
+    }
+
+
+    private EditContext? _editContext;
+
+    public List<ProgramNyelv> programNyelvek { get; set; } = new List<ProgramNyelv>();
+    public List<Iskola> iskolak { get; set; } = new List<Iskola>();
+    public List<Kategoria> kategoriak { get; set; } = new List<Kategoria>();
+    public bool error = false;
+    public string ErrorMessage { get; set; }
+    public bool spinner = false;
+    public CsapatRegisztracioModel csapat = new();
+    private Registr8.Components.Android.NativePicker IskolaPicker;
+    private Registr8.Components.Android.NativePicker ProgramNyelvPicker;
+    private Registr8.Components.Android.NativePicker KategoriaPicker;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    public void SetValasztottIskola(int? id)
+    {
+        csapat.valasztottIskola = id;
+    }
+    public void SetValasztottKategoria(int? id)
+    {
+        csapat.valasztottKategoria = id;
+    }
+    public void SetValasztottProgramNyelv(int? id)
+    {
+        csapat.valasztottProgramNyelv = id;
+    }
+
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(csapat);
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            programNyelvek = await utils.GetMethod<List<ProgramNyelv>>("ProgramNyelv/GetAllProgramNyelv");
+            iskolak = await utils.GetMethod<List<Iskola>>("Iskola/GetAllIskola");
+            kategoriak = await utils.GetMethod<List<Kategoria>>("Kategoria/GetAllKategoria");
+            StateHasChanged();
+        }
+    }
+
+    public bool Android()
+    {
+        return (DeviceInfo.Current.Platform == DevicePlatform.Android);
+    }
+
+    public async Task Regisztracio()
+    {
+        spinner = true;
+        StateHasChanged();
+        CsapatRegReq cs = new CsapatRegReq();
+        if (Android())
+        {
+            cs.IskolaId = IskolaPicker.result.SelectedValue;
+            cs.KategoriaId = KategoriaPicker.result.SelectedValue;
+            cs.ProgramNyelvId = ProgramNyelvPicker.result.SelectedValue;
+        }
+        else
+        {
+            cs.ProgramNyelvId = csapat.valasztottProgramNyelv;
+            cs.IskolaId = csapat.valasztottIskola;
+            cs.KategoriaId = csapat.valasztottKategoria;
+        }
+        cs.Jelszo = utils.Hash(csapat.Jelszo);
+        cs.FelhasznaloNev = csapat.FelhasznaloNev;
+        cs.CsapatNev = csapat.CsapatNev;
+        cs.FelkeszitoTanarok = new List<Tanar>{ new Tanar { Nev = csapat.FelkeszitoTanar } };
+        cs.CsapatTagok = new List<Csapattag> { 
+            new Csapattag {Nev = csapat.ElsoTagNeve, Evfolyam = csapat.ElsoTagEvfolyam, Tipus = Csapattag.CsapattagTipus.Csapattag },
+            new Csapattag {Nev = csapat.MasodikTagNeve, Evfolyam = csapat.MasodikTagEvfolyam, Tipus = Csapattag.CsapattagTipus.Csapattag },
+            new Csapattag {Nev = csapat.HarmadikTagNeve, Evfolyam = csapat.HarmadikTagEvfolyam, Tipus = Csapattag.CsapattagTipus.Csapattag }
+        };
+        if (!string.IsNullOrEmpty(csapat.PotTagNeve))
+        {
+            cs.CsapatTagok.Add(new Csapattag {Nev = csapat.PotTagNeve, Evfolyam = csapat.PotTagEvfolyam, Tipus = Csapattag.CsapattagTipus.Pottag });
+        }
+
+        string response = await utils.PostMethod<string>("Csapat/Regisztracio", cs);
+        if (response != "Ok")
+        {
+            error = true;
+            ToastService.Notify(new(ToastType.Danger, $"Sikeretelen regisztráció!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            error = false;
+            ToastService.Notify(new(ToastType.Success, $"Sikeres regisztráció!"));
+            navigationManager.NavigateTo("/");
+        }
+        spinner = false;
+        StateHasChanged();
+    }
+}

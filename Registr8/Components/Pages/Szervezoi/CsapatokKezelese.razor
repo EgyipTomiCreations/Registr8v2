@@ -1,0 +1,237 @@
+﻿@page "/csapatok-kezelese-szervezo"
+@using BlazorBootstrap
+@inject Utilites utils
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/szervezoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Csapatok kezelése</h2>
+</div>
+
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopCenter" />
+
+<Modal @ref="modal" title="@ModalTitle" UseStaticBackdrop="true" Class="hianypotlas-modal">
+    <BodyTemplate>
+        <textarea rows="10"
+                  @bind="HianyPotlasSzoveg"
+                  class="hianypotlas-textarea"/>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Bezárás</Button>
+        <Button Color="ButtonColor.Primary" @onclick="SendHianyPotlas">
+            @if (spinner)
+            {
+                <Spinner Color="SpinnerColor.Secondary" />
+            }
+            else
+            {
+                @("Küldés")
+            }
+        </Button>
+    </FooterTemplate>
+</Modal>
+
+<Accordion AlwaysOpen="true" class="mb-2">
+    <AccordionItem Title="Regisztrált csapatok megtekintése">
+        <Content>
+            @foreach (var csapat in Csapatok)
+            {
+                <table class="csapat-table">
+                    <tr>
+                        <td><strong>Csapat neve:</strong></td>
+                        <td>@csapat.CsapatNev</td>
+                    </tr>
+                    <tr>
+                        @if (csapat.Iskola != null)
+                        {
+                            <td><strong>Iskola neve:</strong></td>
+                            <td>@csapat.Iskola.Nev</td>
+                        }
+
+                    </tr>
+                    <tr>
+                        <td><strong>Csapattagok:</strong></td>
+                        <td>
+                            @foreach (var tag in csapat.Csapattagok.Where(cs => cs.Tipus != Csapattag.CsapattagTipus.Pottag))
+                            {
+                                <div>@tag.Nev (@tag.Evfolyam.)</div>
+                            }
+                        </td>
+                    </tr>
+                    @if (csapat.Csapattagok.Any(cs => cs.Tipus == Csapattag.CsapattagTipus.Pottag))
+                    {
+                        <tr>
+                            <td><strong>Póttag:</strong></td>
+                            <td>
+                                @foreach (var tag in csapat.Csapattagok.Where(cs => cs.Tipus == Csapattag.CsapattagTipus.Pottag))
+                                {
+                                    <div>@tag.Nev (@tag.Evfolyam.)</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td><strong>Felkészítő tanárok:</strong></td>
+                        <td>
+                            @foreach (var tanar in csapat.FelkeszitoTanarok)
+                            {
+                                <div>@tanar.Nev</div>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Programozási nyelvek:</strong></td>
+                        <td>
+                            @if (csapat.ProgramNyelvek != null)
+                            {
+                                @foreach (var nyelv in csapat.ProgramNyelvek)
+                                {
+                                    @if (nyelv != null)
+                                    {
+                                        <div>@nyelv.Nev</div>
+                                    }
+
+                                }
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Regisztráció állapota:</strong></td>
+                        <td>@csapat.AllapotSzoveg</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Műveletek:</strong></td>
+                        <td class="muveletek-td">
+                            <Button Color="ButtonColor.Primary" @onclick="() => OnShowModalClick(csapat)">
+                                @if (spinner)
+                                {
+                                    <Spinner Color="SpinnerColor.Secondary" />
+                                }
+                                else
+                                {
+                                    <Icon Name="IconName.Mailbox" />
+                                }
+                            </Button>
+
+                            <Button Color="ButtonColor.Success" @onclick="() => Jovahagyas(csapat.ID, Csapat.RegisztracioAllapot.SzervezokJovahagytak)">
+                                @if (spinner)
+                                {
+                                    <Spinner Color="SpinnerColor.Secondary" />
+                                }
+                                else
+                                {
+                                    <Icon Name="IconName.Check" />
+                                }
+                            </Button>
+                            
+                            <Button Color="ButtonColor.Danger" @onclick="() => Jovahagyas(csapat.ID, Csapat.RegisztracioAllapot.ElutasitvaSzervezo)">
+                                @if (spinner)
+                                {
+                                    <Spinner Color="SpinnerColor.Secondary" />
+                                }
+                                else
+                                {
+                                    <Icon Name="IconName.X" />
+                                }
+                            </Button>
+                        </td>
+
+                    </tr>
+                </table>
+            }
+        </Content>
+    </AccordionItem>
+</Accordion>
+@code {
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    List<ToastMessage> messages = new List<ToastMessage>();
+
+    public string ModalTitle { get; set; }
+    public string HianyPotlasSzoveg { get; set; }
+    private Modal modal = default!;
+    private CsapatDto _hianypotlasCsapata { get; set; }
+    private bool spinner = false;
+
+    private async Task OnShowModalClick(CsapatDto csapat)
+    {
+        ModalTitle = $"{csapat.CsapatNev} csapat hiánypótlása";
+        _hianypotlasCsapata = csapat;
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+
+    public async Task Jovahagyas(int id, Csapat.RegisztracioAllapot r)
+    {
+        spinner = true;
+        StateHasChanged();
+        string response = await utils.PostMethod<string>($"Csapat/{id}/Jovahagyas", r, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            if (r == Csapat.RegisztracioAllapot.SzervezokJovahagytak)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Sikeretelen jóváhagyás!", $"Hiba oka: {response}"));
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Sikeretelen elutasítás!", $"Hiba oka: {response}"));
+            }
+        }
+        else
+        {
+            if (r == Csapat.RegisztracioAllapot.SzervezokJovahagytak)
+            {
+                ToastService.Notify(new(ToastType.Success, $"Sikeres jóváhagyás!"));
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Success, $"Sikeres elutasítás!"));
+            }
+
+        }
+        spinner = false;
+        await GetAllCsapat();
+        StateHasChanged();
+    }
+
+
+    private async Task SendHianyPotlas()
+    {
+        spinner = true;
+        StateHasChanged();
+        UzenetRegReq uzenet = new UzenetRegReq { CsapatID = _hianypotlasCsapata.ID, SzervezoNev = await utils.GetMethod<string>("Login/GetFelhasznaloNev", Globals.token.Guid.ToString()), Tartalom = HianyPotlasSzoveg, Targy = "Hiánypótlás" };
+        string response = await utils.PostMethod<string>("Uzenet/Regisztracio", uzenet, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikeretelen küldés!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres küldés!"));
+        }
+        await OnHideModalClick();
+        spinner = false;
+    }
+
+
+    public List<CsapatDto> Csapatok { get; set; } = new List<CsapatDto>();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetAllCsapat();
+        }
+    }
+
+    public async Task GetAllCsapat()
+    {
+        Csapatok = await utils.GetMethod<List<CsapatDto>>("Csapat/GetAllCsapat", Globals.token.Guid.ToString());
+        StateHasChanged();
+    }
+}

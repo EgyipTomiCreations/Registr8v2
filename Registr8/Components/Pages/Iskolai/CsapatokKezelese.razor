@@ -1,0 +1,295 @@
+﻿@page "/csapatok-kezelese-iskola"
+@inject Utilites utils
+@inject Interfaces.IFilePickerService FilePicker
+
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopCenter" />
+
+<Modal @ref="modal" title="Hozzájárulás feltöltése" UseStaticBackdrop="true" Class="hianypotlas-modal" IsScrollable="true">
+    <BodyTemplate>
+        @if (file.base64 != null)
+        {
+            @if (disabled)
+            {
+                <Button @onclick="() => DownloadPDF(_modalcsapata.ID)" Color="ButtonColor.Primary" Class="btn btn-group text-center">Feltöltött PDF letöltése</Button>
+                <PdfViewer Class="mb-3"
+                           Url="@string.Format("data:application/pdf;base64,{0}", file.base64)" />
+            }
+            else
+            {
+                <PdfViewer Class="mb-3"
+                       Url="@string.Format("data:application/pdf;base64,{0}", file.base64)" />
+            }
+        }
+        else
+        {
+            <Button @onclick="() => DownloadPDF(_modalcsapata.ID)" Color="ButtonColor.Primary" Class="btn btn-group text-center">Kitöltendő jelentkezési lap letöltése</Button>
+            <Button Color="ButtonColor.Primary" @onclick="PickFile" Class="btn btn-group text-center">Hozzájárulás PDF feltöltése</Button>
+        }
+
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Bezárás</Button>
+        <Button Color="ButtonColor.Primary" Disabled="disabled" @onclick="() => Jovahagyas(_modalcsapata.ID, Csapat.RegisztracioAllapot.IskolaJovahagyta)">
+            @if (spinner)
+            {
+                <Spinner Color="SpinnerColor.Secondary" />
+            }
+            else
+            {
+                <Icon Name="IconName.Check" />
+                @("Jóváhagyás")
+            }
+        </Button>
+    </FooterTemplate>
+</Modal>
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/iskolai-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Csapatok kezelése</h2>
+</div>
+
+@if (csapatok != null)
+{
+    <Accordion AlwaysOpen="true" class="mb-2">
+        <AccordionItem Title="Regisztrált csapatok megtekintése">
+            <Content>
+                @foreach (var csapat in csapatok)
+                {
+                    <table class="csapat-table">
+                        <tr>
+                            <td><strong>Csapat neve:</strong></td>
+                            <td>@csapat.CsapatNev</td>
+                        </tr>
+                        <tr>
+                            @if (csapat.Iskola != null)
+                            {
+                                <td><strong>Iskola neve:</strong></td>
+                                <td>@csapat.Iskola.Nev</td>
+                            }
+
+                        </tr>
+                        <tr>
+                            <td><strong>Csapattagok:</strong></td>
+                            <td>
+                                @foreach (var tag in csapat.Csapattagok.Where(cs => cs.Tipus != Csapattag.CsapattagTipus.Pottag))
+                                {
+                                    <div>@tag.Nev (@tag.Evfolyam.)</div>
+                                }
+                            </td>
+                        </tr>
+                        @if (csapat.Csapattagok.Any(cs => cs.Tipus == Csapattag.CsapattagTipus.Pottag))
+                        {
+                            <tr>
+                                <td><strong>Póttag:</strong></td>
+                                <td>
+                                    @foreach (var tag in csapat.Csapattagok.Where(cs => cs.Tipus == Csapattag.CsapattagTipus.Pottag))
+                                    {
+                                        <div>@tag.Nev (@tag.Evfolyam.)</div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        <tr>
+                            <td><strong>Felkészítő tanárok:</strong></td>
+                            <td>
+                                @foreach (var tanar in csapat.FelkeszitoTanarok)
+                                {
+                                    <div>@tanar.Nev</div>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Programozási nyelvek:</strong></td>
+                            <td>
+                                @if (csapat.ProgramNyelvek != null)
+                                {
+                                    @foreach (var nyelv in csapat.ProgramNyelvek)
+                                    {
+                                        @if (nyelv != null)
+                                        {
+                                            <div>@nyelv.Nev</div>
+                                        }
+
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regisztráció állapota:</strong></td>
+                            <td>@csapat.AllapotSzoveg</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Műveletek:</strong></td>
+                            <td class="muveletek-td">
+                                <Button Color="ButtonColor.Primary" @onclick="() => OnShowModalClick(csapat)">
+                                    @if (spinner)
+                                    {
+                                        <Spinner Color="SpinnerColor.Secondary" />
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="IconName.Check" />
+                                    }
+                                </Button>
+                                <Button Color="ButtonColor.Danger" @onclick="() => Jovahagyas(csapat.ID, Csapat.RegisztracioAllapot.ElutasitvaIskola)">
+                                    @if (spinner)
+                                    {
+                                        <Spinner Color="SpinnerColor.Secondary" />
+                                    }
+                                    else
+                                    {
+                                        <Icon Name="IconName.X" />
+                                    }
+                                </Button>
+                            </td>
+
+                        </tr>
+                    </table>
+                }
+            </Content>
+        </AccordionItem>
+    </Accordion>
+}
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+    public Dokumentum file { get; set; }
+    List<CsapatDto> csapatok { get; set; }
+    bool spinner = false;
+    public List<ToastMessage> messages = new List<ToastMessage>();
+    private Modal modal = default!;
+    private CsapatDto _modalcsapata { get; set; }
+    private bool disabled = false;
+
+    private async Task OnShowModalClick(CsapatDto csapat)
+    {
+        _modalcsapata = csapat;
+        file = new();
+        string base64 = await utils.GetMethod<string>($"Dokumentum/GetDokumentum/{csapat.ID}");
+        if (base64 == null)
+        {
+            disabled = false;
+        }
+        else
+        {
+            disabled = true;
+            file.base64 = base64;
+        }
+        await modal.ShowAsync();
+    }
+
+    private async Task DownloadPDF(int key)
+    {
+        @if (disabled)
+        {
+            await Browser.OpenAsync($"https://duszapi.runasp.net/Dokumentum/DownloadDokumentum/{key}", BrowserLaunchMode.SystemPreferred);
+        }
+        else
+        {
+            await Browser.OpenAsync($"https://duszapi.runasp.net/Dokumentum/JelentkezesiLap/Download/{key}", BrowserLaunchMode.SystemPreferred);
+
+        }
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+
+    public async Task FetchCsapatok()
+    {
+        csapatok = await utils.GetMethod<List<CsapatDto>>("Iskola/GetAllCsapat", Globals.token.Guid.ToString());
+    }
+
+    public async Task Jovahagyas(int id, Csapat.RegisztracioAllapot r)
+    {
+        spinner = true;
+        StateHasChanged();
+        string response = await utils.PostMethod<string>($"Csapat/{id}/Jovahagyas", r, Globals.token.Guid.ToString());
+        if (r == Csapat.RegisztracioAllapot.ElutasitvaIskola)
+        {
+            if (response != "Ok")
+            {
+                if (r == Csapat.RegisztracioAllapot.IskolaJovahagyta)
+                {
+                    ToastService.Notify(new(ToastType.Danger, $"Sikeretelen jóváhagyás!", $"Hiba oka: {response}"));
+                }
+                else
+                {
+                    ToastService.Notify(new(ToastType.Danger, $"Sikeretelen elutasítás!", $"Hiba oka: {response}"));
+                }
+            }
+            else
+            {
+                if (r == Csapat.RegisztracioAllapot.IskolaJovahagyta)
+                {
+                    ToastService.Notify(new(ToastType.Success, $"Sikeres jóváhagyás!"));
+                }
+                else
+                {
+                    ToastService.Notify(new(ToastType.Success, $"Sikeres elutasítás!"));
+                }
+
+            }
+            spinner = false;
+            return;
+        }
+        
+        file.ForeignKey = id;
+        file.Tipus = "PDF-Igazolas";
+        response += await utils.PostMethod<string>("Dokumentum/Feltoltes", file, Globals.token.Guid.ToString());
+        if (response != "OkOk")
+        {
+            if (r == Csapat.RegisztracioAllapot.IskolaJovahagyta)
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Sikeretelen jóváhagyás!", $"Hiba oka: {response}"));
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, $"Sikeretelen elutasítás!", $"Hiba oka: {response}"));
+            }
+        }
+        else
+        {
+            if (r == Csapat.RegisztracioAllapot.IskolaJovahagyta)
+            {
+                ToastService.Notify(new(ToastType.Success, $"Sikeres jóváhagyás!"));
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Success, $"Sikeres elutasítás!"));
+            }
+
+        }
+        spinner = false;
+        await FetchCsapatok();
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FetchCsapatok();
+            StateHasChanged();
+        }
+    }
+
+    public async Task PickFile()
+    {
+        file = await FilePicker.PickPdfFileAsync();
+        if (file != null)
+        {
+            disabled = false;
+        }
+        else
+        {
+            disabled = true;
+        }
+        StateHasChanged();
+    }
+}

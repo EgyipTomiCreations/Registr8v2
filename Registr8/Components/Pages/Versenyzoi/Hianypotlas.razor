@@ -1,0 +1,41 @@
+﻿@page "/hianypotlas"
+@inject Utilites utils
+
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/versenyzoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Hiánypótlás</h2>
+</div>
+
+@if (uzenetek == null || uzenetek.Count == 0)
+{
+    <p>Még nem érkezett hiánypótlási kérelem!</p>
+}
+else
+{
+    foreach (Uzenet uzenet in uzenetek)
+    {
+        <div class="hianypotlas-uzenet">
+            <pre>@uzenet.Tartalom</pre>
+        </div>
+    }
+}
+
+
+@code {
+    List<Uzenet> uzenetek { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            uzenetek = await utils.GetMethod<List<Uzenet>>("Uzenet/GetAllUzenet", Globals.token.Guid.ToString());
+            StateHasChanged();
+        }
+    }
+
+}

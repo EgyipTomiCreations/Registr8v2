@@ -1,0 +1,112 @@
+﻿@page "/programnyelvek-kezelese"
+
+@inject Utilites utils
+
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/szervezoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Programnyelvek kezelése</h2>
+</div>
+
+<h5>Programnyelv hozzáadása</h5>
+<div class="programnyelv-add">
+    <InputText class="form-control" @bind-Value="ujProgramNyelv.Nev" />
+    <button class="btn btn-success" @onclick="AddProgramnyelv"><i class="bi bi-plus"></i></button>
+</div>
+
+
+@if (programnyelvek.Count == 0)
+{
+    <p>Nincs még egy programnyelv sem hozzáadva.</p>
+}
+else
+{
+    <h5>Programnyelvek megtekintése</h5>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Programnyelv</th>
+                <th>Műveletek</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var programnyelv in programnyelvek)
+            {
+                <tr>
+                    <td>@programnyelv.Nev</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="(() => DeleteProgramnyelv(programnyelv))"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    public List<ProgramNyelv> programnyelvek = new List<ProgramNyelv>();
+
+    public ProgramNyelv ujProgramNyelv = new();
+    public List<CsapatDto> Csapatok = new();
+
+    public async Task DeleteProgramnyelv(ProgramNyelv programnyelv)
+    {
+        if (Csapatok.Any(x => x.ProgramNyelvek[0].ID == programnyelv.ID))
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen törlés!", $"Hiba oka: A programnyelv használatban van!"));
+            return;
+        }
+        var response = await utils.PostMethod<string>("ProgramNyelv/Torles", programnyelv, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen törlés!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres törlés!"));
+        }
+        await GetProgramnyelvek();
+    }
+
+    public async Task AddProgramnyelv()
+    {
+        var response = await utils.PostMethod<string>("ProgramNyelv/Regisztracio", ujProgramNyelv, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikertelen hozzáadás!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres hozzáadás!"));
+        }
+        await GetProgramnyelvek();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetProgramnyelvek();
+            await GetAllCsapat();
+        }
+    }
+
+    public async Task GetProgramnyelvek()
+    {
+        programnyelvek = await utils.GetMethod<List<ProgramNyelv>>("ProgramNyelv/GetAllProgramNyelv");
+        StateHasChanged();
+    }
+
+    public async Task GetAllCsapat()
+    {
+        Csapatok = await utils.GetMethod<List<CsapatDto>>("Csapat/GetAllCsapat", Globals.token.Guid.ToString());
+        StateHasChanged();
+    }
+
+}

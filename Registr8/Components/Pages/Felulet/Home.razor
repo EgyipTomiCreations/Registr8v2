@@ -1,0 +1,132 @@
+﻿@page "/"
+@using System.ComponentModel.DataAnnotations
+@inject Utilites utils
+@inject NavigationManager navManager
+
+<h1 class="cim">Registr8</h1>
+<h2>Bejelentkezés</h2>
+
+<EditForm EditContext="@_editContext" OnValidSubmit="Bejelentkezes">
+    <DataAnnotationsValidator />
+
+    <div class="input-div">
+        <label>Felhasználónév</label>
+        <InputText class="form-control" type="text" autocomplete="username" @bind-Value="felhasznalo.FelhasznaloNev" />
+        <ValidationMessage For="@(() => felhasznalo.FelhasznaloNev)" />
+    </div>
+
+    <div class="input-div">
+        <label>Jelszó</label>
+        <InputText class="form-control" @bind-Value="felhasznalo.Jelszo" type="password" autocomplete="current-password"/>
+        <ValidationMessage For="@(() => felhasznalo.Jelszo)" />
+    </div>
+
+    <div class="input-div">
+        <Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Class="regiszt-btn">
+            @if (spinner)
+            {
+                <Spinner Color="SpinnerColor.Secondary" />
+            }
+            else
+            {
+                <div>Bejelentkezés</div>
+            }
+        </Button>
+    </div>
+</EditForm>
+
+
+
+@if (error)
+{
+    <a>@ErrorMessage</a>
+}
+
+@if (!hatarido.lezart)
+{
+    <a class="sajat-button" href="/csapat-regisztracio">Nincs felhasználói fiókom, csapatot szeretnék regisztrálni...</a>
+}
+else
+{
+    <span>A határidő lezárult, a csapatregisztráció nem lehetséges!</span>
+}
+
+
+@code {
+
+    public class Felhasznalo : AuthReq
+    {
+    };
+
+    public Felhasznalo felhasznalo { get; set; } = new();
+
+
+    private EditContext? _editContext;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(felhasznalo);
+        base.OnInitialized();
+    }
+
+    public Hatarido hatarido = new Hatarido();
+    public bool error = false;
+    public string ErrorMessage { get; set; }
+    public bool spinner = false;
+
+
+    public async Task Bejelentkezes()
+    {
+        spinner = true;
+        StateHasChanged();
+        Globals.token = await utils.Login(new AuthReq { FelhasznaloNev = felhasznalo.FelhasznaloNev,
+            Jelszo = utils.Hash(felhasznalo.Jelszo) });
+        if (Globals.token == null)
+        {
+            error = true;
+            ErrorMessage = "Nem elérhető a szerver! Kérlek próbáld újra!";
+        }
+        else
+        {
+            if (Globals.token.FelhKategoria == Auth.FelhKategoria.UnAuth)
+            {
+                error = true;
+                ErrorMessage = "Helytelen felhasználónév vagy jelszó!";
+            }
+            else
+            {
+                error = false;
+                navManager.NavigateTo(Globals.HomeUrl);
+            }
+        }
+        spinner = false;
+        StateHasChanged();
+    }
+
+    public async Task OnKeyEnter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await Bejelentkezes();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Globals.HomeUrl != "/")
+            {
+                navManager.NavigateTo(Globals.HomeUrl);
+            }
+            await GetHatarido();
+        }
+    }
+
+    public async Task GetHatarido()
+    {
+        hatarido = await utils.GetMethod<Hatarido>("Hatarido/GetHatarido");
+        StateHasChanged();
+    }
+
+}

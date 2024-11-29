@@ -1,0 +1,61 @@
+﻿@inject Interfaces.IPlatformPickerService PlatformPickerService
+
+<Dropdown Color="DropdownColor.Primary" OnHidden="StateHasChanged">
+<DropdownActionButton @onclick="ShowPlatformPicker" Style="width: 100%;">
+    @CurrentMessage
+    </DropdownActionButton>
+</Dropdown>
+
+@code {
+    private EditContext? _editContext;
+
+    [Parameter]
+    public List<PickerItem> Items { get; set; }
+    [Parameter]
+    public string Message { get; set; }
+    [Parameter]
+    public string ButtonClass { get; set; }
+    [Parameter]
+    public string ButtonMessage { get; set; }
+    [Parameter]
+    public EventCallback<int?> OnValueChanged { get; set; }
+
+    public string CurrentMessage = "";
+
+    public class Result
+    {
+        public int? SelectedValue { get; set; } = null;
+    }
+
+    public Result result = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CurrentMessage = ButtonMessage;
+            StateHasChanged();
+            base.OnAfterRender(firstRender);
+        }
+    }
+
+    private async Task ShowPlatformPicker()
+    {
+        result.SelectedValue = await PlatformPickerService.ShowPickerAsync(Message, Items);
+        if (result.SelectedValue != null)
+        {
+            CurrentMessage = Items.First(x => x.ID == result.SelectedValue).Name;            
+            StateHasChanged();
+            await OnValueChanged.InvokeAsync(result.SelectedValue);
+        }
+        else
+        {
+            CurrentMessage = ButtonMessage;
+        }
+    }
+}

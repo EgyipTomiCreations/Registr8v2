@@ -1,0 +1,23 @@
+﻿@page "/logout"
+@inject Utilites utils
+
+@inject NavigationManager navManager
+<h2>Kijelentkezés...</h2>
+@code{
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Globals.token == null)
+            {
+                navManager.NavigateTo("/");
+            }
+            await utils.Logout();
+            Globals.token = null;
+            Globals.client.DefaultRequestHeaders.Remove("Authorization");
+            navManager.NavigateTo("/");
+
+        }
+    }
+}

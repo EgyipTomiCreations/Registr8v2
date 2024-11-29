@@ -1,0 +1,52 @@
+﻿@page "/statisztika"
+@inject Utilites utils
+
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/szervezoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Statisztika</h2>
+</div>
+
+<h3>Osztályok eloszlása</h3>
+
+
+<PieChart @ref="pieChart" Class="pie-chart" />
+
+@code{
+    private PieChart pieChart = default!;
+    private PieChartOptions pieChartOptions = default!;
+    private ChartData chartData = default!;
+    private string[]? backgroundColors;
+
+    private int datasetsCount = 0;
+    private int dataLabelsCount = 0;
+
+    private Random random = new();
+
+
+    protected override void OnInitialized()
+    {
+        backgroundColors = ColorUtility.CategoricalTwelveColors;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            EvfolyamStat stat = await utils.GetMethod<EvfolyamStat>("Statisztika/GetEvfolyamStatisztika");
+
+            List<IChartDataset> datasets = new();
+            datasets.Add(new PieChartDataset() { Data = new List<double?> { stat.kilencdb, stat.tizdb, stat.tizenegydb, stat.tizenkettodb, stat.tizenharomdb } });
+            chartData = new ChartData { Labels = new List<string> { "9. évfolyamosok száma", "10. évfolyamosok száma", "11. évfolyamosok száma", "12. évfolyamosok száma", "13. évfolyamosok száma" }, Datasets = datasets };
+
+            pieChartOptions = new();
+            pieChartOptions.Responsive = true;
+            await pieChart.InitializeAsync(chartData, pieChartOptions);
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

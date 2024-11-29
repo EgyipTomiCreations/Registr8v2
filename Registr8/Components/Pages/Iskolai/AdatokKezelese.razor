@@ -1,0 +1,160 @@
+﻿@page "/adatok-kezelese"
+@using Registr8.Models
+@inject Utilites utils
+
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/iskolai-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Adatok kezelése</h2>
+</div>
+
+<Accordion AlwaysOpen="true" class="mb-2">
+    <AccordionItem Title="Iskola módosítása">
+        <Content>
+            <EditForm EditContext="@_editContext" OnValidSubmit="Modositas">
+            <DataAnnotationsValidator />
+            <div class="regisztracio-div">
+                <div class="input-div">
+                    <label>Felhasználónév</label>
+                    <InputText class="form-control" autocomplete="username" @bind-Value="Iskola.FelhasznaloNev" />
+                    <ValidationMessage For="@(() => Iskola.FelhasznaloNev)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Jelszó</label>
+                    <InputText class="form-control" type="password" autocomplete="new-password" @bind-Value="Iskola.Jelszo" />
+                    <ValidationMessage For="@(() => Iskola.Jelszo)" />
+                </div>
+
+
+                <div class="input-div">
+                    <label>Iskola neve</label>
+                    <InputText class="form-control" @bind-Value="Iskola.IskolaNev" />
+                    <ValidationMessage For="@(() => Iskola.IskolaNev)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Irányítószám</label>
+                    <NumberInput @bind-Value="Iskola.Iranyitoszam" Placeholder="Irányítószám" />
+                    <ValidationMessage For="@(() => Iskola.Iranyitoszam)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Város neve</label>
+                    <InputText class="form-control" autocomplete="shipping address-level2" @bind-Value="Iskola.VarosNev" />
+                    <ValidationMessage For="@(() => Iskola.VarosNev)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Közterület neve</label>
+                    <InputText class="form-control" autocomplete="shipping address-level3" @bind-Value="Iskola.KozteruletNev" />
+                    <ValidationMessage For="@(() => Iskola.KozteruletNev)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Házszám</label>
+                    <InputText class="form-control" autocomplete="shipping address-level4"  @bind-Value="Iskola.Szam" />
+                    <ValidationMessage For="@(() => Iskola.Szam)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Kapcsolattartó neve</label>
+                    <InputText class="form-control" @bind-Value="Iskola.KapcsolatTartoNev" />
+                    <ValidationMessage For="@(() => Iskola.KapcsolatTartoNev)" />
+                </div>
+
+                <div class="input-div">
+                    <label>Kapcsolattartó email címe </label>
+                    <InputText class="form-control" type="email" @bind-Value="Iskola.KapcsolatTartoEmail" />
+                    <ValidationMessage For="@(() => Iskola.KapcsolatTartoEmail)" />
+                </div>
+
+                <div class="input-div">
+                        <Button Type="ButtonType.Submit" Color="ButtonColor.Primary" Class="regiszt-btn">
+                            @if (spinner)
+                            {
+                                <Spinner Color="SpinnerColor.Secondary" />
+                            }
+                            else
+                            {
+                                <div>Módosítás</div>
+                            }
+                        </Button>
+                </div>
+            </div>
+            </EditForm>
+        </Content>
+    </AccordionItem>
+</Accordion>
+
+@code {
+    [Inject]
+    protected ToastService ToastService { get; set; } = default!;
+
+    Iskola iskola { get; set; }
+    bool spinner = false;
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(Iskola);
+        base.OnInitialized();
+    }
+
+    private EditContext? _editContext;
+
+    public IskolaRegisztracioModel Iskola { get; set; } = new IskolaRegisztracioModel();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetIskola();
+        }
+    }
+
+    public async Task GetIskola()
+    {
+        iskola = await utils.GetMethod<Iskola>("Iskola/GetIskola", Globals.token.Guid.ToString());
+        Iskola.FelhasznaloNev = await utils.GetMethod<string>("Login/GetFelhasznaloNev", Globals.token.Guid.ToString());
+        Iskola.IskolaNev = iskola.Nev;
+        Iskola.Iranyitoszam = iskola.HelyrajziAdatok!.IranyitoSzam ?? default;
+        Iskola.VarosNev = iskola.HelyrajziAdatok!.VarosNev ?? default;
+        Iskola.KozteruletNev = iskola.HelyrajziAdatok!.KozteruletNev ?? default;
+        Iskola.Szam = iskola.HelyrajziAdatok!.Szam ?? default;
+        Iskola.KapcsolatTartoNev = iskola.KapcsolatTarto.Nev;
+        Iskola.KapcsolatTartoEmail = iskola.KapcsolatTarto.Email;
+        StateHasChanged();
+    }
+
+    public async Task Modositas()
+    {
+        spinner = true;
+        StateHasChanged();
+        IskolaRegReq i = new();
+        i.FelhasznaloNev = Iskola.FelhasznaloNev;
+        i.Jelszo = utils.Hash(Iskola.Jelszo);
+        i.IskolaNev = Iskola.IskolaNev;
+        i.HelyrajziAdatok.IranyitoSzam = Iskola.Iranyitoszam;
+        i.HelyrajziAdatok.VarosNev = Iskola.VarosNev;
+        i.HelyrajziAdatok.KozteruletNev = Iskola.KozteruletNev;
+        i.HelyrajziAdatok.Szam = Iskola.Szam;
+        i.KapcsolatTarto.Nev = Iskola.KapcsolatTartoNev;
+        i.KapcsolatTarto.Email = Iskola.KapcsolatTartoEmail;
+
+        string response = await utils.PostMethod<string>("Iskola/Modositas", i, Globals.token.Guid.ToString());
+        await GetIskola();
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikeretelen módosítás!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres módosítás!"));
+        }
+        spinner = false;
+        StateHasChanged();
+    }
+}

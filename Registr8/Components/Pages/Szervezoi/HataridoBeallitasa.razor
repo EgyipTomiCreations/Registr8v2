@@ -1,0 +1,88 @@
+﻿@page "/hatarido-beallitas"
+
+
+@inject Utilites utils
+
+<h1 class="cim">Registr8</h1>
+
+<a href="/logout" class="logout-div"><i class="bi bi-box-arrow-right"></i></a>
+<a href="/szervezoi-felulet" class="home-div"><i class="bi bi-house"></i></a>
+
+<div class="header">
+    <h2>Határidő beállítása</h2>
+</div>
+
+<div class="hatarido-beallitas">
+    <div class="hatarido-add">
+        <input type="datetime" @bind="@hatarido.hatarido">
+        <Button Color="ButtonColor.Primary" @onclick="Modositas">
+            Módosítás
+        </Button>
+    </div>
+
+    
+
+    @if (hatarido.lezart)
+    {
+        <span>A határidőt lezárták!
+        </span>
+    }
+    else
+    {
+        <div class="lezaras">
+            <h3>Jelentkezés azonnali lezárása</h3>
+            <Button Color="ButtonColor.Danger" @onclick="Lezaras">
+                Lezárás
+            </Button>
+        </div>
+    }
+</div>
+
+@code
+{
+    [Inject] protected ToastService ToastService { get; set; } = default!;
+
+    Hatarido hatarido = new Hatarido();
+
+    public async Task Modositas()
+    {
+        var response = await utils.PostMethod<string>("Hatarido/Regisztracio", hatarido, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikeretelen módosítás!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres módosítás!"));
+        }
+        await GetHatarido();
+    }
+
+    public async Task Lezaras()
+    {
+        var response =  await utils.PostMethod<string>("Hatarido/Lezaras", hatarido, Globals.token.Guid.ToString());
+        if (response != "Ok")
+        {
+            ToastService.Notify(new(ToastType.Danger, $"Sikeretelen lezárás!", $"Hiba oka: {response}"));
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Success, $"Sikeres lezárás!"));
+        }
+        await GetHatarido();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetHatarido();
+        }
+    }
+
+    public async Task GetHatarido()
+    {
+        hatarido = await utils.GetMethod<Hatarido>("Hatarido/GetHatarido", Globals.token.Guid.ToString());
+        StateHasChanged();
+    }
+}
